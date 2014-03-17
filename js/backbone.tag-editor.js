@@ -4,10 +4,19 @@ var TagItemView = Backbone.View.extend({
   className: "tag-editor-tag",
   template: _.template('<div class="tag-editor-text"><%= name %></div>' + 
       '<a class="tag-editor-delete">x</a>'),
+  events: {
+    'click .tag-editor-delete': 'deleteTag'
+  },
+  initialize: function() {
+    this.listenTo(this.model, 'change', this.render);
+  },
   render: function() {
     var html = this.template(this.model.toJSON());
     this.$el.html(html);
     return this;
+  },
+  deleteTag: function() {
+    this.model.destroy();
   }
 });
 
@@ -27,11 +36,12 @@ var TagEditorView = Backbone.View.extend({
     this.tagMeasure = (new TagItemView({model: new Tag({name: ""})})).render().$el;
     this.tagMeasure.css({position: 'absolute', left: "-999px"});
     this.textMeasure = this.tagMeasure.find('.tag-editor-text');
+    this.listenTo(this.collection, 'add', this.onAddModel);
+    this.listenTo(this.collection, 'remove', this.onRemoveModel);
   },
   className: 'tag-editor-field',
   events: {
     click: 'onClick',
-    'click .tag-editor-delete': 'onDeleteClick',
     'focus .tag-editor-input': 'onInputFocus',
     'blur .tag-editor-input': 'onInputBlur',
     'keydown .tag-editor-input': 'onInputKeydown',
@@ -50,18 +60,14 @@ var TagEditorView = Backbone.View.extend({
     }
     return -1;
   },
-  onDeleteClick: function(e) {
-    var $textElem = Backbone.$(e.target).prev(),
-      tag = $textElem.text(),
-      $tagEditorField = $textElem.parent().parent(),
-      view = $tagEditorField.data('view'),
-      i = view._indexOfTag(tag);
-    if (i !== -1) {
-      view.collection.models.splice(i, 1);
-      view.itemViews.splice(i, 1);
-      $textElem.parent().remove();
-    }
-    return false;
+  onAddModel: function(model, collection, options) {
+    this.itemViews.splice(options.at, 0, new TagItemView({model: model}));
+    this.render();
+    this.tagInput.focus();
+  },
+  onRemoveModel: function(model, collection, options) {
+    this.itemViews.splice(options.index, 1);
+    this.render();
   },
   onInputFocus: function() {
     this.tagInput.css('font', this.textMeasure.css('font'));
@@ -71,11 +77,11 @@ var TagEditorView = Backbone.View.extend({
     this._insertTag(val.replace(this.sepRegex, ''));
   },
   onInputKeydown: function(e) {
-    var val = this.tagInput.val(), tags = this.collection;
-    if (!val && e.which == 8 /* Backspace */ && tags.length) {
-      tags.pop();
-      this.itemViews.pop();
-      this.tagInput.prev().remove();
+    var val = this.tagInput.val(), collection = this.collection;
+    if (!val && e.which == 8 /* Backspace */ && collection.length) {
+      e.preventDefault();
+      collection.pop();
+      this.tagInput.focus();
     }
   },
   onInputKeyup: function() {
@@ -105,27 +111,21 @@ var TagEditorView = Backbone.View.extend({
     }, 50);
   },
   _insertTag: function(tag) {
-    var model, itemView;
     if (tag && !this.collection.where({name: tag}, true)) {
-      model = new Tag({name: tag});
-      this.collection.push(model);
-      itemView = new TagItemView({model: model});
-      this.itemViews.push(itemView);
-      this.tagInput.before(itemView.render().el).val('');
-    } else {
-      this.tagInput.val('');
+      this.collection.push(new Tag({name: tag}));
     }
+    this.tagInput.val('');
     this._adjustInputWidth('');
   },
   render: function() {
     var $el = this.$el;
+    $el.empty();
     $el.append(this.tagMeasure);
     _(this.itemViews).each(function(itemView) {
       $el.append(itemView.render().el);
     });
     $el.append(this.tagInput);
     $el.css('width', this.width);
-    $el.data('view', this);
     this._adjustInputWidth('');
     return this;
   }
