@@ -9,13 +9,14 @@ var TagItemView = Backbone.View.extend({
   },
   initialize: function() {
     this.listenTo(this.model, 'change', this.render);
+    this.listenTo(this.model, 'destroy', this.remove);
   },
   render: function() {
     var html = this.template(this.model.toJSON());
     this.$el.html(html);
     return this;
   },
-  deleteTag: function() {
+  deleteTag: function(e) {
     this.model.destroy();
   }
 });
@@ -61,13 +62,11 @@ var TagEditorView = Backbone.View.extend({
     return -1;
   },
   onAddModel: function(model, collection, options) {
-    this.itemViews.splice(options.at, 0, new TagItemView({model: model}));
-    this.render();
-    this.tagInput.focus();
+    this.$el.children('div:nth-child(' + (options.at + 1) + ')').after(
+        new TagItemView({model: model}).render().el);
   },
   onRemoveModel: function(model, collection, options) {
     this.itemViews.splice(options.index, 1);
-    this.render();
   },
   onInputFocus: function() {
     this.tagInput.css('font', this.textMeasure.css('font'));
@@ -80,7 +79,7 @@ var TagEditorView = Backbone.View.extend({
     var val = this.tagInput.val(), collection = this.collection;
     if (!val && e.which == 8 /* Backspace */ && collection.length) {
       e.preventDefault();
-      collection.pop();
+      collection.pop().destroy();
       this.tagInput.focus();
     }
   },
