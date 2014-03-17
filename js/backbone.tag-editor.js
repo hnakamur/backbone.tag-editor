@@ -51,16 +51,6 @@ var TagEditorView = Backbone.View.extend({
   onClick: function() {
     this.tagInput.focus();
   },
-  _indexOfTag: function(tag) {
-    var i, models = this.collection.models, l = models.length, model;
-    for (i = 0; i < l; i++) {
-      model = models[i];
-      if (model.get('name') === tag) {
-        return i;
-      }
-    }
-    return -1;
-  },
   onAddModel: function(model, collection, options) {
     this.$el.children('div:nth-child(' + (options.at + 1) + ')').after(
         new TagItemView({model: model}).render().el);
@@ -73,7 +63,7 @@ var TagEditorView = Backbone.View.extend({
   },
   onInputBlur: function() {
     var val = this.tagInput.val();
-    this._insertTag(val.replace(this.sepRegex, ''));
+    this.insertTag(val.replace(this.sepRegex, ''));
   },
   onInputKeydown: function(e) {
     var val = this.tagInput.val(), collection = this.collection;
@@ -92,14 +82,14 @@ var TagEditorView = Backbone.View.extend({
         // because text pasted from clipboard may contain those.
         that = this;
         _.each(matches[1].split(this.sepRegex), function(tag) {
-          that._insertTag(tag);
+          that.insertTag(tag);
         });
       } else {
-        this._adjustInputWidth(val);
+        this.adjustInputWidth(val);
       }
     }
   },
-  _adjustInputWidth: function(val) {
+  adjustInputWidth: function(val) {
     var that = this;
     // To avoid juggling of input widths, we measure text width
     // with two more characters.  We use 'W' here because it is
@@ -109,12 +99,12 @@ var TagEditorView = Backbone.View.extend({
       that.tagInput.css('width', that.textMeasure.width());
     }, 50);
   },
-  _insertTag: function(tag) {
+  insertTag: function(tag) {
     if (tag && !this.collection.where({name: tag}, true)) {
       this.collection.push(new Tag({name: tag}));
     }
     this.tagInput.val('');
-    this._adjustInputWidth('');
+    this.adjustInputWidth('');
   },
   render: function() {
     var $el = this.$el;
@@ -125,7 +115,7 @@ var TagEditorView = Backbone.View.extend({
     });
     $el.append(this.tagInput);
     $el.css('width', this.width);
-    this._adjustInputWidth('');
+    this.adjustInputWidth('');
     return this;
   }
 });
