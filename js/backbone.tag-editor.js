@@ -26,8 +26,7 @@ var Tags = Backbone.Collection.extend({
 });
 
 var TagEditorView = Backbone.View.extend({
-  tagRegex: /^(.*)[, ]+$/,
-  sepRegex: /[, ]+/m,
+  separator: /[, ]+/,
   initialize: function(options) {
     this.width = options.width;
     this.itemViews = _.map(this.collection.models, function(model) {
@@ -62,8 +61,7 @@ var TagEditorView = Backbone.View.extend({
     this.tagInput.css('font', this.textMeasure.css('font'));
   },
   onInputBlur: function() {
-    var val = this.tagInput.val();
-    this.insertTag(val.replace(this.sepRegex, ''));
+    this.mayInsertTags();
   },
   onInputKeydown: function(e) {
     var val = this.tagInput.val(), collection = this.collection;
@@ -74,19 +72,11 @@ var TagEditorView = Backbone.View.extend({
     }
   },
   onInputKeyup: function() {
-    var val = this.tagInput.val(), matches, that;
-    if (val) {
-      matches = this.tagRegex.exec(val);
-      if (matches) {
-        // We need to split tag text with separators
-        // because text pasted from clipboard may contain those.
-        that = this;
-        _.each(matches[1].split(this.sepRegex), function(tag) {
-          that.insertTag(tag);
-        });
-      } else {
-        this.adjustInputWidth(val);
-      }
+    var val = this.tagInput.val();
+    if (this.separator.test(val)) {
+      this.mayInsertTags();
+    } else {
+      this.adjustInputWidth(val);
     }
   },
   adjustInputWidth: function(val) {
@@ -99,10 +89,15 @@ var TagEditorView = Backbone.View.extend({
       that.tagInput.css('width', that.textMeasure.width());
     }, 50);
   },
-  insertTag: function(tag) {
-    if (tag && !this.collection.where({name: tag}, true)) {
-      this.collection.push(new Tag({name: tag}));
-    }
+  mayInsertTags: function() {
+    var val = this.tagInput.val();
+    // We need to split tag text with separators
+    // because text pasted from clipboard may contain those.
+    _.each(val.split(this.separator), function(word) {
+      if (word && !this.collection.where({name: word}, true)) {
+        this.collection.push(new Tag({name: word}));
+      }
+    }, this);
     this.tagInput.val('');
     this.adjustInputWidth('');
   },
