@@ -66,9 +66,7 @@ var TagEditorView = Backbone.View.extend({
   onInputKeydown: function(e) {
     var val = this.tagInput.val(), collection = this.collection;
     if (!val && e.which == 8 /* Backspace */ && collection.length) {
-      e.preventDefault();
       collection.pop().destroy();
-      this.tagInput.focus();
     }
   },
   onInputKeyup: function() {
