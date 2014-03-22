@@ -76,21 +76,21 @@ var TagEditorView = Backbone.View.extend({
     if (this.separator.test(val)) {
       this.mayInsertTags();
     } else {
-      this.adjustInputWidth(val);
+      this.adjustInputWidth();
     }
   },
-  adjustInputWidth: function(val) {
-    var that = this;
+  adjustInputWidth: function() {
+    var tagInput = this.tagInput, textMeasure = this.textMeasure;
     // To avoid juggling of input widths, we measure text width
     // with two more characters.  We use 'W' here because it is
     // a wide character.
-    this.textMeasure.text(val + 'WW');
-    setTimeout(function() {
-      that.tagInput.css('width', that.textMeasure.width());
-    }, 50);
+    textMeasure.text(tagInput.val() + 'WW');
+    tagInput.css('width', textMeasure.width());
   },
   mayInsertTags: function() {
-    var val = this.tagInput.val();
+    var tagInput = this.tagInput, val = tagInput.val();
+    tagInput.val('');
+    this.adjustInputWidth();
     // We need to split tag text with separators
     // because text pasted from clipboard may contain those.
     _.each(val.split(this.separator), function(word) {
@@ -98,8 +98,6 @@ var TagEditorView = Backbone.View.extend({
         this.collection.push(new Tag({name: word}));
       }
     }, this);
-    this.tagInput.val('');
-    this.adjustInputWidth('');
   },
   render: function() {
     var $el = this.$el;
@@ -110,7 +108,7 @@ var TagEditorView = Backbone.View.extend({
     });
     $el.append(this.tagInput);
     $el.css('width', this.width);
-    this.adjustInputWidth('');
+    this.adjustInputWidth();
     return this;
   }
 });
