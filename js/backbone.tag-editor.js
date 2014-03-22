@@ -59,6 +59,7 @@ var TagEditorView = Backbone.View.extend({
   },
   onInputFocus: function() {
     this.tagInput.css('font', this.textMeasure.css('font'));
+    this.adjustInputWidth();
   },
   onInputBlur: function() {
     this.mayInsertTags();
@@ -106,7 +107,6 @@ var TagEditorView = Backbone.View.extend({
     });
     $el.append(this.tagInput);
     $el.css('width', this.width);
-    this.adjustInputWidth();
     return this;
   }
 });
