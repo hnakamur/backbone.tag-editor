@@ -28,7 +28,6 @@ var Tags = Backbone.Collection.extend({
 var TagEditorView = Backbone.View.extend({
   separator: /[, ]+/,
   initialize: function(options) {
-    this.width = options.width;
     this.itemViews = _.map(this.collection.models, function(model) {
       return new TagItemView({model: model});
     });
@@ -106,7 +105,6 @@ var TagEditorView = Backbone.View.extend({
       $el.append(itemView.render().el);
     });
     $el.append(this.tagInput);
-    $el.css('width', this.width);
     return this;
   }
 });
